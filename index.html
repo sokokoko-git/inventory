@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>うちの在庫 — リダイレクト</title>
+<!--
+  =====================================================
+  うちの在庫システム リダイレクタ
+  =====================================================
+  
+  このページは「うちの在庫」のGAS WebアプリへのリダイレクタHTMLです。
+  
+  QRコードに固定URLを埋め込めるようにするのが目的:
+    - QR内容: https://YOUR-USERNAME.github.io/inventory/?qr=QR-00001
+    - 自動転送 → GAS WebアプリのURL?qr=QR-00001
+  
+  GASのデプロイURLが変わったら、下記 GAS_URL を書き換えるだけで
+  既存の印刷済みQRはすべて引き続き使えます。
+  
+  使い方:
+    1. このファイルを GitHub リポジトリにアップロード
+       (例: kiyora/inventory リポジトリの index.html)
+    2. リポジトリの Settings → Pages を有効化
+    3. 公開URLを確認 (例: https://kiyora.github.io/inventory/)
+    4. GAS側の QR印刷画面で「外部URL」を上記URLに設定
+  
+  GASデプロイURLを変更したい時:
+    下記 GAS_URL の値だけを書き換えて Git push → 完了
+  =====================================================
+-->
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    background: #f7f5f0;
+    color: #1a1815;
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+  .box {
+    background: white;
+    padding: 32px 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+  }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e6e1d8;
+    border-top-color: #1a1815;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  p {
+    color: #76706a;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 8px 0;
+  }
+  .qr-tag {
+    display: inline-block;
+    background: #1a1815;
+    color: #f7f5f0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  a.btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 18px;
+    background: #1a1815;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .error { color: #c0392b; }
+</style>
+</head>
+<body>
+
+<script>
+  // =====================================================
+  // ⚠ ここだけ書き換える: GASのWebアプリURL
+  // =====================================================
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzOHSsA3T33b7Lj5KQ5Jbnt11y5ryT2e1VlBEl35XmmTPrgLcwCYcp-/exec';
+
+  // クエリパラメータをそのまま転送
+  const params = window.location.search || '';
+  const targetUrl = GAS_URL + params;
+
+  // 画面に状態を表示してから即座にリダイレクト
+  document.addEventListener('DOMContentLoaded', () => {
+    const qr = new URLSearchParams(params).get('qr');
+    if (qr) {
+      document.getElementById('qr-display').textContent = qr;
+      document.getElementById('qr-row').style.display = 'block';
+    }
+    document.getElementById('manual-link').href = targetUrl;
+
+    // 即時転送（ブラウザ履歴に残さないために replace を使用）
+    window.location.replace(targetUrl);
+  });
+</script>
+
+<div class="box">
+  <div class="spinner"></div>
+  <h1>うちの在庫に移動しています</h1>
+  <div id="qr-row" style="display: none">
+    <p style="margin-bottom: 4px">読み取ったQR:</p>
+    <span class="qr-tag" id="qr-display">—</span>
+  </div>
+  <p style="margin-top: 16px; font-size: 12px; color: #a8a29a">
+    自動で移動しない場合は下のボタンから
+  </p>
+  <a class="btn" id="manual-link" href="#">続行</a>
+</div>
+
+</body>
+</html>
