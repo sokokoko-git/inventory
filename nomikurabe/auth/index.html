@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- ファイル名: landing/auth/index.html -->
-<!-- 最終更新: 2026-06-07 15:30 -->
+<!-- 最終更新: 2026-06-07 16:30 -->
 <!-- NOMIKURABE 認証専用ページ（GitHub Pages にホスト） -->
 <html lang="ja">
 <head>
@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>NOMIKURABE 認証</title>
 <style>
+  * { box-sizing: border-box; }
   html, body {
     margin: 0; height: 100%;
     background: #0d0d0d; color: #ccc;
@@ -17,25 +18,52 @@
     min-height: 100%;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 24px; padding: 24px; text-align: center;
+    gap: 14px; padding: 24px; text-align: center;
   }
-  .logo { font-size: 22px; letter-spacing: 0.15em; color: #fff; }
-  .sub  { font-size: 12px; color: #888; letter-spacing: 0.06em; }
-  button {
-    font-family: inherit; font-size: 13px; letter-spacing: 0.1em;
-    color: #0d0d0d; background: #e8e8e8; border: none;
-    padding: 14px 28px; cursor: pointer;
+  .logo { font-size: 24px; letter-spacing: 0.15em; color: #fff; }
+  .sub  { font-size: 13px; color: #999; letter-spacing: 0.04em; line-height: 1.7; }
+  .spacer { height: 18px; }
+
+  /* Google 公式デザインに準拠したサインインボタン */
+  .gbtn {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: #fff; color: #1f1f1f;
+    border: none; border-radius: 8px;
+    padding: 0 20px 0 14px; height: 52px;
+    font-family: 'Roboto', Arial, sans-serif;
+    font-size: 16px; font-weight: 500; letter-spacing: 0.02em;
+    cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    transition: box-shadow 0.15s, transform 0.05s;
   }
-  button:disabled { opacity: 0.5; cursor: default; }
-  .msg { font-size: 12px; color: #999; min-height: 18px; }
+  .gbtn:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+  .gbtn:active { transform: scale(0.98); }
+  .gbtn:disabled { opacity: 0.55; cursor: default; }
+  .gbtn svg { width: 22px; height: 22px; flex: none; }
+
+  .hint { font-size: 11px; color: #666; letter-spacing: 0.04em; }
+  .msg  { font-size: 12px; color: #9a9; min-height: 18px; margin-top: 4px; }
+  .msg.err { color: #d77; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="logo">NOMIKURABE</div>
-  <div class="sub">ログインして続行</div>
-  <button id="btn">Google でログイン</button>
+  <div class="sub">お酒のテイスティング記録アプリ<br>続けるにはログインしてください</div>
+  <div class="spacer"></div>
+
+  <button class="gbtn" id="btn">
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    Google でログイン
+  </button>
+
   <div class="msg" id="msg"></div>
+  <div class="spacer"></div>
+  <div class="hint">アカウント情報はログイン以外に使用しません</div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -54,6 +82,11 @@ var auth = firebase.auth();
 var btn  = document.getElementById('btn');
 var msg  = document.getElementById('msg');
 
+function setMsg(text, isErr) {
+  msg.textContent = text;
+  msg.className = 'msg' + (isErr ? ' err' : '');
+}
+
 // トークンを開き元（アプリの iframe）へ送り返す
 function sendTokens(user) {
   return user.getIdToken().then(function (idToken) {
@@ -65,23 +98,23 @@ function sendTokens(user) {
     };
     if (window.opener) {
       window.opener.postMessage(payload, '*');
-      msg.textContent = 'ログイン成功。閉じています…';
+      setMsg('ログイン成功。このタブは自動で閉じます…');
       setTimeout(function () { window.close(); }, 600);
     } else {
-      msg.textContent = 'このページはアプリから開いてください。';
+      setMsg('このページはアプリの「ログイン」から開いてください。', true);
     }
   });
 }
 
 btn.addEventListener('click', function () {
   btn.disabled = true;
-  msg.textContent = '認証中…';
+  setMsg('認証中…');
   var provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider)
     .then(function (cred) { return sendTokens(cred.user); })
     .catch(function (e) {
       btn.disabled = false;
-      msg.textContent = '失敗: ' + (e.message || e.code);
+      setMsg('ログインに失敗しました: ' + (e.message || e.code), true);
     });
 });
 </script>
